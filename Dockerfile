@@ -29,23 +29,18 @@ RUN composer install \
 COPY . .
 RUN composer dump-autoload --optimize --no-dev --no-interaction
 
-# ---- Runtime: nginx + PHP-FPM (Coolify / single-container friendly) ----
+# ---- Runtime: nginx + PHP-FPM ----
 FROM php:8.3-fpm-bookworm
 
 WORKDIR /var/www/html
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        curl \
-        git \
-        libicu-dev \
-        libpq-dev \
-        libzip-dev \
-        nginx \
-        supervisor \
-        unzip \
-        zip \
-    && docker-php-ext-configure intl \
-    && docker-php-ext-install -j$(nproc) \
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PORT=80
+
+# Prebuilt extensions — avoids compiling intl/opcache from source (slow + OOM on small VPSes)
+COPY --from=mlocati/php-extension-installer:2 /usr/bin/install-php-extensions /usr/local/bin/
+
+RUN install-php-extensions \
         bcmath \
         intl \
         opcache \
@@ -53,8 +48,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         pdo_pgsql \
         pgsql \
         zip \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        curl \
+        nginx \
+        supervisor \
     && rm -rf /var/lib/apt/lists/* \
-    && rm -f /etc/nginx/sites-enabled/default
+    && rm -f /etc/nginx/sites-enabled/default \
+    && mkdir -p /etc/nginx/templates /var/log/nginx /var/lib/nginx/body /run/nginx /var/log/supervisor
 
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-bamado.ini
@@ -62,10 +63,7 @@ COPY docker/php/zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf
 COPY docker/nginx/default.conf /etc/nginx/templates/default.conf.template
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh \
-    && mkdir -p /etc/nginx/templates /var/log/nginx /var/lib/nginx/body /run/nginx \
-    && rm -f /etc/nginx/conf.d/default.conf
-
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 COPY --chown=www-data:www-data --from=vendor /app/vendor ./vendor
 COPY --chown=www-data:www-data . .
@@ -78,14 +76,10 @@ RUN mkdir -p \
         storage/logs \
         storage/app/public \
         bootstrap/cache \
-        /var/log/supervisor \
-        /var/run \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R ug+rwx storage bootstrap/cache
 
-# Coolify: set "Ports Exposes" to 80 (or set PORT to match)
 EXPOSE 80
-ENV PORT=80
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
