@@ -1,9 +1,13 @@
 #!/bin/sh
 set -e
 
-echo "Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT}..."
+DB_HOST="${DB_HOST:-}"
+DB_PORT="${DB_PORT:-5432}"
 
-until php -r "
+if [ -n "$DB_HOST" ] && [ "${SKIP_DB_WAIT:-false}" != "true" ]; then
+    echo "Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT}..."
+
+    until php -r "
 try {
     new PDO(
         sprintf('pgsql:host=%s;port=%s;dbname=%s', getenv('DB_HOST'), getenv('DB_PORT') ?: '5432', getenv('DB_DATABASE')),
@@ -15,12 +19,12 @@ try {
     exit(1);
 }
 " >/dev/null 2>&1; do
-    sleep 1
-done
+        sleep 1
+    done
 
-echo "PostgreSQL is ready."
+    echo "PostgreSQL is ready."
+fi
 
-# Named volumes can wipe directory structure — recreate what Laravel needs.
 mkdir -p \
     storage/framework/cache/data \
     storage/framework/sessions \
@@ -31,20 +35,20 @@ mkdir -p \
 
 chown -R www-data:www-data storage bootstrap/cache || true
 
-if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
+if [ "${RUN_MIGRATIONS:-true}" = "true" ] && [ -n "$DB_HOST" ]; then
     echo "Running migrations..."
     php artisan migrate --force
 fi
 
-if [ "${RUN_SEEDERS:-false}" = "true" ]; then
+if [ "${RUN_SEEDERS:-false}" = "true" ] && [ -n "$DB_HOST" ]; then
     echo "Running seeders..."
     php artisan db:seed --force
 fi
 
 if [ "${APP_ENV}" = "production" ] || [ "${CACHE_CONFIG:-true}" = "true" ]; then
-    php artisan config:cache
-    php artisan route:cache
-    php artisan view:cache
+    php artisan config:cache || true
+    php artisan route:cache || true
+    php artisan view:cache || true
     php artisan event:cache || true
 fi
 

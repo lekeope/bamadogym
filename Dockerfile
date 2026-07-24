@@ -28,8 +28,8 @@ RUN composer install \
 COPY . .
 RUN composer dump-autoload --optimize --no-dev --no-interaction
 
-# ---- Runtime (PHP-FPM) ----
-FROM php:8.3-fpm-bookworm AS app
+# ---- Runtime: nginx + PHP-FPM (Coolify / single-container friendly) ----
+FROM php:8.3-fpm-bookworm
 
 WORKDIR /var/www/html
 
@@ -39,6 +39,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libicu-dev \
         libpq-dev \
         libzip-dev \
+        nginx \
+        supervisor \
         unzip \
         zip \
     && docker-php-ext-configure intl \
@@ -50,12 +52,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         pdo_pgsql \
         pgsql \
         zip \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -f /etc/nginx/sites-enabled/default
 
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-bamado.ini
+COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
@@ -70,16 +73,13 @@ RUN mkdir -p \
         storage/logs \
         storage/app/public \
         bootstrap/cache \
+        /var/log/supervisor \
+        /var/run \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R ug+rwx storage bootstrap/cache
 
-EXPOSE 9000
+# Coolify / platforms expect HTTP on this port
+EXPOSE 80
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["php-fpm"]
-
-# ---- Nginx (static + reverse proxy to PHP-FPM) ----
-FROM nginx:1.27-alpine AS web
-
-COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
-COPY --from=app /var/www/html/public /var/www/html/public
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

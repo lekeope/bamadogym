@@ -10,7 +10,7 @@ A Laravel 13 web application for managing an open-access gym. Handles member onb
 - **Payments:** Laravel Cashier (Stripe)
 - **Database:** SQLite (local) / PostgreSQL (Docker & production)
 - **Email:** Laravel Mail (log driver in local, configure Mailgun/Resend/SMTP in prod)
-- **Deploy:** Docker Compose (`nginx` + `php-fpm` + `postgres` + queue + scheduler)
+- **Deploy:** Docker (single image: nginx + PHP-FPM + queue + scheduler) + PostgreSQL
 
 ## Features
 
@@ -41,40 +41,43 @@ Default admin: `admin@bamadogym.com` — set a password after seed:
 
 ## Deploy with Docker (PostgreSQL)
 
-Production-oriented stack:
+Single container image (nginx + PHP-FPM + queue + scheduler). Works with **Coolify Dockerfile** deploys and local Compose.
 
-| Service | Role |
-|---------|------|
-| `nginx` | HTTP on port `8080` (override with `APP_PORT`) |
-| `app` | PHP-FPM 8.3 + Laravel (runs migrations on start) |
-| `postgres` | PostgreSQL 16 |
-| `queue` | `php artisan queue:work` |
-| `scheduler` | `php artisan schedule:work` (payment reminders) |
+| Piece | Role |
+|-------|------|
+| App container | HTTP on port **80** (maps to `8080` locally) |
+| `postgres` | PostgreSQL 16 (Compose) / Coolify Postgres resource |
+| Queue + scheduler | Supervisord processes inside the app container |
+
+### Coolify (Dockerfile)
+
+1. Build Pack: **Dockerfile**
+2. Port: **80**
+3. Attach a PostgreSQL database
+4. Set env from `.env.docker.example` (`DB_HOST` = Coolify’s Postgres host, not `postgres` unless that’s the service name)
+5. Generate `APP_KEY`, set `APP_URL` to your public URL
+
+### Local Compose
 
 ```bash
 cp .env.docker.example .env
 
 # Generate an app key (one-time):
 docker run --rm php:8.3-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
-# Paste the value into APP_KEY= in .env
-
-# Set a strong DB_PASSWORD, APP_URL, Stripe keys, and mail settings in .env
+# Paste into APP_KEY= in .env
 
 docker compose up -d --build
 ```
 
 App URL: **http://localhost:8080**
 
-Useful commands:
-
 ```bash
 docker compose logs -f app
 docker compose exec app php artisan migrate --force
-docker compose exec app php artisan db:seed --force
 docker compose down
 ```
 
-First boot with `RUN_SEEDERS=true` (default in `.env.docker.example`) creates plans + admin user. Set `RUN_SEEDERS=false` after the first deploy so restarts don’t re-seed.
+First boot with `RUN_SEEDERS=true` creates plans + admin. Set `RUN_SEEDERS=false` after the first deploy.
 
 ## Environment variables
 
@@ -89,7 +92,7 @@ First boot with `RUN_SEEDERS=true` (default in `.env.docker.example`) creates pl
 
 ## Scheduled tasks
 
-In Docker, the `scheduler` service runs the Laravel scheduler (no host cron needed).
+In Docker, the app container runs the Laravel scheduler via Supervisord (no host cron needed).
 
 Without Docker, add:
 
