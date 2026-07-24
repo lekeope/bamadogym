@@ -58,10 +58,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-bamado.ini
-COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY docker/php/zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf
+COPY docker/nginx/default.conf /etc/nginx/templates/default.conf.template
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh \
+    && mkdir -p /etc/nginx/templates /var/log/nginx /var/lib/nginx/body /run/nginx \
+    && rm -f /etc/nginx/conf.d/default.conf
+
 
 COPY --chown=www-data:www-data --from=vendor /app/vendor ./vendor
 COPY --chown=www-data:www-data . .
@@ -79,8 +83,9 @@ RUN mkdir -p \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R ug+rwx storage bootstrap/cache
 
-# Coolify / platforms expect HTTP on this port
+# Coolify: set "Ports Exposes" to 80 (or set PORT to match)
 EXPOSE 80
+ENV PORT=80
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

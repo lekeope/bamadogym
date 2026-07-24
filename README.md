@@ -52,10 +52,10 @@ Single container image (nginx + PHP-FPM + queue + scheduler). Works with **Cooli
 ### Coolify (Dockerfile)
 
 1. Build Pack: **Dockerfile**
-2. Port: **80**
-3. Attach a PostgreSQL database
-4. Set env from `.env.docker.example` (`DB_HOST` = Coolify’s Postgres host, not `postgres` unless that’s the service name)
-5. Generate `APP_KEY`, set `APP_URL` to your public URL
+2. **Ports Exposes: `80`** (must match — Coolify Bad Gateway usually means this is wrong, e.g. left at 3000)
+3. Attach a PostgreSQL database and map `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
+4. Set `APP_KEY`, `APP_URL` (your public HTTPS URL), `APP_ENV=production`, `APP_DEBUG=false`
+5. Optional: `RUN_SEEDERS=true` on first deploy only
 
 ### Local Compose
 
