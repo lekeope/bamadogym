@@ -28,9 +28,10 @@ services:
     container_name: bamado-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_DATABASE:-bamadogym}
-      POSTGRES_USER: ${DB_USERNAME:-bamado}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+      # Keep in sync with DB_URL in .env (user/password/db name).
+      POSTGRES_DB: ${POSTGRES_DB:-bamadogym}
+      POSTGRES_USER: ${POSTGRES_USER:-bamado}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_strong_password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

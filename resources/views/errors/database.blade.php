@@ -58,17 +58,16 @@
         <h1>Can’t reach PostgreSQL</h1>
         <p>
             The app is running, but it could not connect to the database.
-            Fix the database environment variables in Coolify and restart — do not use
-            <strong>127.0.0.1</strong> as <code style="display:inline;padding:0.1rem 0.35rem;margin:0;">DB_HOST</code>
-            inside a container.
+            Fix the database URL in Coolify and restart — do not use
+            <strong>127.0.0.1</strong> as the host inside a container.
         </p>
         @if(! empty($message))
             <code>{{ $message }}</code>
         @endif
         <ul>
             <li><strong>DB_CONNECTION</strong> = pgsql</li>
-            <li><strong>DB_HOST</strong> = Coolify Postgres hostname (from the database resource)</li>
-            <li><strong>DB_PORT</strong> / <strong>DB_DATABASE</strong> / <strong>DB_USERNAME</strong> / <strong>DB_PASSWORD</strong></li>
+            <li><strong>DB_URL</strong> = <code style="display:inline;padding:0.1rem 0.35rem;margin:0;">postgres://USER:PASSWORD@HOST:5432/DATABASE</code> (Coolify internal URL)</li>
+            <li>Remove separate <strong>DB_HOST</strong> / <strong>DB_USERNAME</strong> / <strong>DB_PASSWORD</strong> if they disagree with the URL</li>
             <li>Prefer <strong>SESSION_DRIVER=file</strong> until the DB is healthy</li>
         </ul>
     </div>

@@ -54,7 +54,7 @@ Single container image (nginx + PHP-FPM + queue + scheduler). Works with **Cooli
 
 1. Build Pack: **Dockerfile**
 2. **Ports Exposes** must match `PORT` (Coolify often sets `PORT=3000` — then expose **3000**, not 80)
-3. Attach a PostgreSQL database and map `DB_HOST` to the **Coolify Postgres hostname** (never `127.0.0.1` inside the app container), plus `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
+3. Attach a PostgreSQL database and set **`DB_URL`** to the Coolify internal URL (`postgres://USER:PASSWORD@HOST:5432/DATABASE` — never `127.0.0.1`). The app parses host/user/password from this alone.
 4. Set `APP_KEY`, `APP_URL` (your public HTTPS URL), `APP_ENV=production`, `APP_DEBUG=false`
 5. Prefer `SESSION_DRIVER=file` and `CACHE_STORE=file` so a bad DB config does not blank every request
 6. Optional: `RUN_SEEDERS=true` on first deploy only
@@ -91,7 +91,7 @@ Only foundational / secret values belong in `.env` (or Coolify). Everything else
 | Variable | Description |
 |----------|-------------|
 | `APP_KEY` / `APP_URL` / `APP_ENV` / `APP_DEBUG` | App bootstrap |
-| `DB_*` | Database connection |
+| `DB_CONNECTION` / `DB_URL` | Postgres via one URL (`postgres://USER:PASS@HOST:5432/DB`) |
 | `SESSION_DRIVER` / `CACHE_STORE` / `QUEUE_CONNECTION` | Drivers |
 | `MAIL_MAILER` / `MAIL_HOST` / `MAIL_USERNAME` / `MAIL_PASSWORD` | Mail transport (from address/name are in Settings) |
 | `STRIPE_KEY` / `STRIPE_SECRET` / `STRIPE_WEBHOOK_SECRET` | Stripe secrets (currency is in Settings) |

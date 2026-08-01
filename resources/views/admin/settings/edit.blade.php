@@ -17,7 +17,7 @@
 
             <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
                 These settings live in the database. Keep secrets and infrastructure in Coolify / <code class="text-xs bg-amber-100 px-1 rounded">.env</code> only:
-                <span class="font-medium">APP_KEY, APP_URL, DB_*, STRIPE_*, MAIL_MAILER / HOST / USERNAME / PASSWORD, SESSION_DRIVER, CACHE_STORE</span>.
+                <span class="font-medium">APP_KEY, APP_URL, DB_URL, STRIPE_*, MAIL_MAILER / HOST / USERNAME / PASSWORD, SESSION_DRIVER, CACHE_STORE</span>.
             </div>
 
             <form method="POST" action="{{ route('admin.settings.update') }}" class="space-y-6">
