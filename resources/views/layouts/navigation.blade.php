@@ -7,16 +7,21 @@
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('home') }}" class="flex items-center gap-2">
                         <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
-                        <span class="font-extrabold text-gray-900 tracking-tight text-sm">BAMADO GYM</span>
+                        <span class="font-extrabold text-gray-900 tracking-tight text-sm">{{ config('app.name', 'Bamado Gym') }}</span>
                     </a>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     @if(Auth::user()->isStaff())
-                        <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
+                        <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard') || request()->routeIs('admin.members.*')">
                             Admin
                         </x-nav-link>
+                        @if(Auth::user()->isAdmin())
+                        <x-nav-link :href="route('admin.settings.edit')" :active="request()->routeIs('admin.settings.*')">
+                            Settings
+                        </x-nav-link>
+                        @endif
                     @else
                         <x-nav-link :href="route('member.dashboard')" :active="request()->routeIs('member.*')">
                             My Membership
@@ -78,9 +83,14 @@
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             @if(Auth::user()->isStaff())
-                <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
+                <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard') || request()->routeIs('admin.members.*')">
                     Admin
                 </x-responsive-nav-link>
+                @if(Auth::user()->isAdmin())
+                <x-responsive-nav-link :href="route('admin.settings.edit')" :active="request()->routeIs('admin.settings.*')">
+                    Settings
+                </x-responsive-nav-link>
+                @endif
             @else
                 <x-responsive-nav-link :href="route('member.dashboard')" :active="request()->routeIs('member.*')">
                     My Membership

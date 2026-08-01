@@ -53,6 +53,11 @@ Route::middleware(['auth', 'staff'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/members/{member}/status', [Admin\MemberController::class, 'updateStatus'])->name('members.status');
     Route::post('/members/{member}/checkin', [Admin\MemberController::class, 'staffCheckIn'])->name('members.checkin');
     Route::post('/members/{member}/reminder', [Admin\MemberController::class, 'sendReminder'])->name('members.reminder');
+
+    Route::middleware('admin')->group(function () {
+        Route::get('/settings', [Admin\SettingsController::class, 'edit'])->name('settings.edit');
+        Route::put('/settings', [Admin\SettingsController::class, 'update'])->name('settings.update');
+    });
 });
 
 require __DIR__.'/auth.php';

@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureAdmin;
+use App\Http\Middleware\EnsureStaff;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -14,7 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'staff' => \App\Http\Middleware\EnsureStaff::class,
+            'staff' => EnsureStaff::class,
+            'admin' => EnsureAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -22,8 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*'),
         );
 
-        $exceptions->render(function (\Throwable $e, Request $request) {
-            $isDbDown = function (\Throwable $error) use (&$isDbDown): bool {
+        $exceptions->render(function (Throwable $e, Request $request) {
+            $isDbDown = function (Throwable $error) use (&$isDbDown): bool {
                 $messageLooksLikeDisconnect = function (string $message): bool {
                     $message = strtolower($message);
 
@@ -40,7 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
                         || (str_contains($message, 'database "') && str_contains($message, 'does not exist'));
                 };
 
-                if ($error instanceof \PDOException) {
+                if ($error instanceof PDOException) {
                     $sqlState = (string) ($error->errorInfo[0] ?? $error->getCode());
 
                     // Class 08xxx = connection exception.
@@ -59,7 +62,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
 
                 $previous = $error->getPrevious();
-                if ($previous instanceof \Throwable) {
+                if ($previous instanceof Throwable) {
                     return $isDbDown($previous);
                 }
 

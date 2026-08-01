@@ -54,7 +54,7 @@
         </div>
 
         {{-- Quick links --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 {{ auth()->user()->isAdmin() ? 'lg:grid-cols-3' : '' }} gap-4">
             <a href="{{ route('admin.members.index') }}" class="block bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:border-amber-300 transition group">
                 <div class="text-2xl mb-2">👥</div>
                 <div class="font-bold text-gray-900 group-hover:text-amber-600 transition">Member Management</div>
@@ -65,6 +65,13 @@
                 <div class="font-bold text-gray-900 group-hover:text-red-600 transition">Overdue Members</div>
                 <div class="text-sm text-gray-500 mt-1">{{ $overdueCount }} member{{ $overdueCount !== 1 ? 's' : '' }} with overdue payments.</div>
             </a>
+            @if(auth()->user()->isAdmin())
+            <a href="{{ route('admin.settings.edit') }}" class="block bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:border-amber-300 transition group">
+                <div class="text-2xl mb-2">⚙️</div>
+                <div class="font-bold text-gray-900 group-hover:text-amber-600 transition">Gym Settings</div>
+                <div class="text-sm text-gray-500 mt-1">Branding, contact, hours, email from, currency, reminders.</div>
+            </a>
+            @endif
         </div>
 
     </div>

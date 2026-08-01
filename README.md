@@ -22,8 +22,9 @@ A Laravel 13 web application for managing an open-access gym. Handles member onb
 - **Stripe checkout** — online membership renewal via Cashier
 - **Manual payment recording** — staff records cash/bank transfer; auto-extends membership
 - **Admin dashboard** — today's check-ins, membership stats, overdue list
+- **Gym settings** — branding, contact, hours, mail-from, currency, reminder offsets (admin-only; not in `.env`)
 - **Member management** — search, filter by status, view history, status overrides
-- **Payment reminders** — scheduled daily command sends emails at 7-day, due-day, 3-day and 7-day overdue milestones
+- **Payment reminders** — scheduled daily command; day offsets configurable in Gym Settings
 - **Role-based access** — `member`, `staff`, `admin` roles with middleware protection
 
 ## Setup (local, without Docker)
@@ -57,6 +58,7 @@ Single container image (nginx + PHP-FPM + queue + scheduler). Works with **Cooli
 4. Set `APP_KEY`, `APP_URL` (your public HTTPS URL), `APP_ENV=production`, `APP_DEBUG=false`
 5. Prefer `SESSION_DRIVER=file` and `CACHE_STORE=file` so a bad DB config does not blank every request
 6. Optional: `RUN_SEEDERS=true` on first deploy only
+7. After first login as admin, open **Admin → Settings** for branding, contact, hours, mail-from, currency (leave Stripe secrets in Coolify env)
 
 The container **does not wait** for Postgres on boot. If the DB is unreachable, the site still starts and shows a **Database offline** page instead of hanging or crashing.
 
@@ -84,14 +86,16 @@ First boot with `RUN_SEEDERS=true` creates plans + admin. Set `RUN_SEEDERS=false
 
 ## Environment variables
 
+Only foundational / secret values belong in `.env` (or Coolify). Everything else is edited at **Admin → Gym Settings**.
+
 | Variable | Description |
 |----------|-------------|
-| `DB_CONNECTION` | `pgsql` in Docker/prod |
-| `DB_HOST` | `postgres` inside Compose |
-| `STRIPE_KEY` / `STRIPE_SECRET` / `STRIPE_WEBHOOK_SECRET` | Stripe credentials |
-| `MAIL_MAILER` | `log` (dev), `mailgun` / `resend` / `smtp` (prod) |
-| `RUN_MIGRATIONS` | Run `migrate --force` on app container start |
-| `RUN_SEEDERS` | Run seeders on app container start |
+| `APP_KEY` / `APP_URL` / `APP_ENV` / `APP_DEBUG` | App bootstrap |
+| `DB_*` | Database connection |
+| `SESSION_DRIVER` / `CACHE_STORE` / `QUEUE_CONNECTION` | Drivers |
+| `MAIL_MAILER` / `MAIL_HOST` / `MAIL_USERNAME` / `MAIL_PASSWORD` | Mail transport (from address/name are in Settings) |
+| `STRIPE_KEY` / `STRIPE_SECRET` / `STRIPE_WEBHOOK_SECRET` | Stripe secrets (currency is in Settings) |
+| `RUN_MIGRATIONS` / `RUN_SEEDERS` | Docker boot behaviour |
 
 ## Scheduled tasks
 

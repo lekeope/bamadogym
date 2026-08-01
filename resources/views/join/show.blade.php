@@ -1,12 +1,12 @@
 @extends('layouts.public')
 
-@section('title', 'Join Bamado Gym')
+@section('title', 'Join '.($gym['app_name'] ?? 'Bamado Gym'))
 
 @section('content')
 <div class="min-h-screen py-20 flex items-start justify-center">
     <div class="w-full max-w-2xl mx-auto px-4">
         <div class="text-center mb-10">
-            <h1 class="text-4xl font-extrabold text-white mb-3">Join Bamado Gym</h1>
+            <h1 class="text-4xl font-extrabold text-white mb-3">Join {{ $gym['app_name'] ?? 'Bamado Gym' }}</h1>
             <p class="text-zinc-400">Create your account and choose a membership plan.</p>
         </div>
 

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Membership;
 use App\Models\PaymentReminder;
 use App\Notifications\PaymentReminderNotification;
+use App\Services\AppSettings;
 use Illuminate\Console\Command;
 
 class SendPaymentReminders extends Command
@@ -18,18 +19,22 @@ class SendPaymentReminders extends Command
         $this->info('Refreshing membership statuses...');
         Membership::whereNotIn('status', ['frozen'])->each(fn ($m) => $m->refreshStatus());
 
+        $dueSoonDays = (int) AppSettings::get('reminder_due_soon_days', 7);
+        $overdue1 = (int) AppSettings::get('reminder_overdue_days_1', 3);
+        $overdue2 = (int) AppSettings::get('reminder_overdue_days_2', 7);
+
         $rules = [
             'due_soon' => fn ($q) => $q->where('status', 'due')
-                ->whereDate('renewal_date', now()->addDays(7)->toDateString()),
+                ->whereDate('renewal_date', now()->addDays($dueSoonDays)->toDateString()),
 
             'due_today' => fn ($q) => $q->where('status', 'due')
                 ->whereDate('renewal_date', today()->toDateString()),
 
             'overdue_3' => fn ($q) => $q->where('status', 'overdue')
-                ->whereDate('renewal_date', now()->subDays(3)->toDateString()),
+                ->whereDate('renewal_date', now()->subDays($overdue1)->toDateString()),
 
             'overdue_7' => fn ($q) => $q->where('status', 'overdue')
-                ->whereDate('renewal_date', now()->subDays(7)->toDateString()),
+                ->whereDate('renewal_date', now()->subDays($overdue2)->toDateString()),
         ];
 
         foreach ($rules as $type => $scope) {

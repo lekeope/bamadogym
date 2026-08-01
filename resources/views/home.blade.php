@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Bamado Gym')
+@section('title', $gym['app_name'] ?? 'Bamado Gym')
 
 @section('content')
 
@@ -14,11 +14,15 @@
             <span class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
             Now open 7 days a week
         </div>
+        @php
+            $tagline = $gym['tagline'] ?? 'Train Hard. Live Strong.';
+            $parts = preg_split('/\.\s+/', $tagline, 2);
+        @endphp
         <h1 class="text-5xl sm:text-7xl font-extrabold tracking-tight leading-none mb-6">
-            Train Hard.<br><span class="text-amber-400">Live Strong.</span>
+            {{ rtrim($parts[0] ?? 'Train Hard', '.') }}.<br><span class="text-amber-400">{{ isset($parts[1]) ? rtrim($parts[1], '.') . '.' : 'Live Strong.' }}</span>
         </h1>
         <p class="text-lg sm:text-xl text-zinc-300 max-w-2xl mx-auto mb-10">
-            Bamado Gym is Lagos's premier open-access fitness facility. State-of-the-art equipment, expert guidance, and a community that pushes you further.
+            {{ $gym['hero_subtitle'] ?? "Bamado Gym is Lagos's premier open-access fitness facility." }}
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a href="{{ route('join.show') }}" class="w-full sm:w-auto bg-amber-400 text-zinc-950 px-8 py-4 rounded-xl font-bold text-lg hover:bg-amber-300 transition-all hover:scale-105 shadow-lg shadow-amber-400/20">
@@ -41,8 +45,8 @@
 <section id="about" class="py-24 bg-zinc-900">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-            <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">Everything you need to reach your goals</h2>
-            <p class="text-zinc-400 text-lg max-w-2xl mx-auto">No excuses. No limits. Just results.</p>
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">{{ $gym['about_heading'] ?? 'Everything you need to reach your goals' }}</h2>
+            <p class="text-zinc-400 text-lg max-w-2xl mx-auto">{{ $gym['about_blurb'] ?? 'No excuses. No limits. Just results.' }}</p>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             @foreach([
@@ -119,21 +123,21 @@
                         <div class="w-10 h-10 bg-amber-400/10 rounded-lg flex items-center justify-center text-amber-400 flex-shrink-0">📍</div>
                         <div>
                             <div class="font-semibold text-white">Location</div>
-                            <div class="text-zinc-400 text-sm">123 Fitness Road, Lekki, Lagos</div>
+                            <div class="text-zinc-400 text-sm">{{ $gym['contact_address'] ?? '123 Fitness Road, Lekki, Lagos' }}</div>
                         </div>
                     </div>
                     <div class="flex items-start gap-4">
                         <div class="w-10 h-10 bg-amber-400/10 rounded-lg flex items-center justify-center text-amber-400 flex-shrink-0">📞</div>
                         <div>
                             <div class="font-semibold text-white">Phone</div>
-                            <div class="text-zinc-400 text-sm">+234 800 000 0000</div>
+                            <div class="text-zinc-400 text-sm">{{ $gym['contact_phone'] ?? '+234 800 000 0000' }}</div>
                         </div>
                     </div>
                     <div class="flex items-start gap-4">
                         <div class="w-10 h-10 bg-amber-400/10 rounded-lg flex items-center justify-center text-amber-400 flex-shrink-0">✉️</div>
                         <div>
                             <div class="font-semibold text-white">Email</div>
-                            <div class="text-zinc-400 text-sm">info@bamadogym.com</div>
+                            <div class="text-zinc-400 text-sm">{{ $gym['contact_email'] ?? 'info@bamadogym.com' }}</div>
                         </div>
                     </div>
                 </div>
@@ -142,10 +146,10 @@
                 <h3 class="text-lg font-bold text-white mb-6">Opening Hours</h3>
                 <div class="space-y-3">
                     @foreach([
-                        ['Monday – Friday', '5:00 AM – 10:00 PM'],
-                        ['Saturday', '6:00 AM – 8:00 PM'],
-                        ['Sunday', '8:00 AM – 4:00 PM'],
-                        ['Public Holidays', '8:00 AM – 2:00 PM'],
+                        ['Monday – Friday', $gym['hours_weekday'] ?? '5:00 AM – 10:00 PM'],
+                        ['Saturday', $gym['hours_saturday'] ?? '6:00 AM – 8:00 PM'],
+                        ['Sunday', $gym['hours_sunday'] ?? '8:00 AM – 4:00 PM'],
+                        ['Public Holidays', $gym['hours_holiday'] ?? '8:00 AM – 2:00 PM'],
                     ] as [$day, $time])
                     <div class="flex justify-between items-center py-2 border-b border-zinc-700/50 last:border-0">
                         <span class="text-zinc-300 text-sm font-medium">{{ $day }}</span>
