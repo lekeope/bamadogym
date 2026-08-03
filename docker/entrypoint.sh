@@ -20,7 +20,8 @@ mkdir -p \
     /var/lib/nginx/body \
     /run/nginx
 
-chown -R www-data:www-data storage bootstrap/cache || true
+# webdevops PHP-FPM runs as `application` (UID 1000), not www-data.
+chown -R application:application storage bootstrap/cache || true
 
 # Do not wait for Postgres. Try migrate once; if DB is down, start the web UI anyway.
 if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then

@@ -39,6 +39,8 @@ WORKDIR /var/www/html
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PORT=80
 ENV WEB_DOCUMENT_ROOT=/var/www/html/public
+# ionCube installs opcode handlers and forces PHP to disable JIT (noisy warnings).
+ENV PHP_DISMOD=ioncube
 
 USER root
 
@@ -50,19 +52,28 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*; \
     rm -f /etc/nginx/sites-enabled/default; \
     mkdir -p /etc/nginx/templates /etc/nginx/conf.d /var/log/nginx /var/lib/nginx/body /run/nginx /var/log/supervisor; \
-    rm -f /opt/docker/etc/supervisor.d/*.conf /etc/supervisor/conf.d/*.conf || true
+    rm -f /opt/docker/etc/supervisor.d/*.conf /etc/supervisor/conf.d/*.conf || true; \
+    # Drop ionCube so JIT warning cannot fire even without their entrypoint.
+    find /usr/local/etc/php /opt/docker/etc/php -type f \( -iname '*ioncube*' -o -iname '*ion_cube*' \) -delete 2>/dev/null || true; \
+    # Avoid two pools binding :9000 (official www + webdevops application).
+    rm -f /usr/local/etc/php-fpm.d/www.conf /usr/local/etc/php-fpm.d/www.conf.default || true
 
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-bamado.ini
+COPY docker/php/php.ini /opt/docker/etc/php/php.ini
+COPY docker/php/opcache.ini /opt/docker/etc/php/opcache-bamado.ini
+# Replace pool config (do not stack a second [application] / [www] on :9000)
 COPY docker/php/zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf
+COPY docker/php/zz-docker.conf /opt/docker/etc/php/fpm/pool.d/application.conf
 COPY docker/nginx/default.conf /etc/nginx/templates/default.conf.template
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-COPY --chown=www-data:www-data --from=vendor /app/vendor ./vendor
-COPY --chown=www-data:www-data . .
-COPY --chown=www-data:www-data --from=assets /app/public/build ./public/build
+# webdevops PHP-FPM runs as `application` (UID 1000)
+COPY --chown=application:application --from=vendor /app/vendor ./vendor
+COPY --chown=application:application . .
+COPY --chown=application:application --from=assets /app/public/build ./public/build
 
 RUN mkdir -p \
         storage/framework/cache/data \
@@ -71,7 +82,7 @@ RUN mkdir -p \
         storage/logs \
         storage/app/public \
         bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache \
+    && chown -R application:application storage bootstrap/cache \
     && chmod -R ug+rwx storage bootstrap/cache
 
 EXPOSE 80
