@@ -32,16 +32,22 @@ A Laravel 13 web application for managing an open-access gym. Handles member onb
 ```bash
 cp .env.example .env
 php artisan key:generate
-php artisan migrate --seed
+php artisan migrate
 npm install && npm run dev
 php artisan serve
 ```
 
-Default admin after seed:
-- Email: `admin@bamadogym.com` (or `ADMIN_EMAIL`)
-- Password: `password` (or `ADMIN_PASSWORD`)
+Create an admin (once), then log in at `/login`:
 
-Change the password after first login.
+```bash
+php artisan tinker --execute="
+\\App\\Models\\User::query()->updateOrCreate(
+  ['email' => 'admin@bamadogym.com'],
+  ['name' => 'Admin', 'role' => 'admin', 'password' => 'password', 'checkin_token' => \\Illuminate\\Support\\Str::random(32)]
+);
+echo 'ok';
+"
+```
 
 ## Deploy with Docker (PostgreSQL)
 
@@ -58,13 +64,36 @@ Single container image (nginx + PHP-FPM + queue + scheduler). Works with **Cooli
 1. Build Pack: **Dockerfile** (runtime uses `webdevops/php:8.3` so PHP extensions are pulled prebuilt — avoids OOM while compiling `intl` on small VPSes)
 2. **Ports Exposes** must match `PORT` (Coolify often sets `PORT=3000` — then expose **3000**, not 80)
 3. Mark `APP_ENV` / DB secrets as **Runtime only** when Coolify offers that (do not bake production env into the build)
-3. Attach a PostgreSQL database and set **`DB_URL`** to the Coolify internal URL (`postgres://USER:PASSWORD@HOST:5432/DATABASE` — never `127.0.0.1`). The app parses host/user/password from this alone.
-4. Set `APP_KEY`, `APP_URL` (your public HTTPS URL), `APP_ENV=production`, `APP_DEBUG=false`
-5. Prefer `SESSION_DRIVER=file` and `CACHE_STORE=file` so a bad DB config does not blank every request
-6. Optional: `RUN_SEEDERS=true` on first deploy only (creates admin + plans; set `ADMIN_PASSWORD` in Coolify)
-7. After first login as admin, set `RUN_SEEDERS=false`, change the admin password, then open **Admin → Settings** for branding/contact/hours
+4. Attach a PostgreSQL database and set **`DB_URL`** to the Coolify internal URL (`postgres://USER:PASSWORD@HOST:5432/DATABASE` — never `127.0.0.1`). The app parses host/user/password from this alone.
+5. Set `APP_KEY`, `APP_URL` (your public HTTPS URL), `APP_ENV=production`, `APP_DEBUG=false`
+6. Prefer `SESSION_DRIVER=file` and `CACHE_STORE=file` so a bad DB config does not blank every request
+7. After deploy, create an admin in the container terminal (see below), then open **Admin → Settings**
 
 The container **does not wait** for Postgres on boot. If the DB is unreachable, the site still starts and shows a **Database offline** page instead of hanging or crashing.
+
+### Create / inspect admin (Coolify terminal or `docker compose exec app`)
+
+List admins (email + role only — passwords are hashed):
+
+```bash
+php artisan tinker --execute="
+\\App\\Models\\User::query()->where('role','admin')->get(['id','email','role'])->each(fn (\$u) => print(\$u->id.' '.\$u->email.' '.\$u->role.PHP_EOL));
+echo 'admin count: '.\\App\\Models\\User::query()->where('role','admin')->count().PHP_EOL;
+echo 'user count: '.\\App\\Models\\User::query()->count().PHP_EOL;
+"
+```
+
+Create or reset admin password:
+
+```bash
+php artisan tinker --execute="
+\\App\\Models\\User::query()->updateOrCreate(
+  ['email' => 'admin@bamadogym.com'],
+  ['name' => 'Admin', 'role' => 'admin', 'password' => 'password', 'checkin_token' => \\Illuminate\\Support\\Str::random(32)]
+);
+echo 'admin ready';
+"
+```
 
 ### Local Compose
 
@@ -86,8 +115,6 @@ docker compose exec app php artisan migrate --force
 docker compose down
 ```
 
-First boot with `RUN_SEEDERS=true` creates plans + admin. Set `RUN_SEEDERS=false` after the first deploy.
-
 ## Environment variables
 
 Only foundational / secret values belong in `.env` (or Coolify). Everything else is edited at **Admin → Gym Settings**.
@@ -99,8 +126,7 @@ Only foundational / secret values belong in `.env` (or Coolify). Everything else
 | `SESSION_DRIVER` / `CACHE_STORE` / `QUEUE_CONNECTION` | Drivers |
 | `MAIL_MAILER` / `MAIL_HOST` / `MAIL_USERNAME` / `MAIL_PASSWORD` | Mail transport (from address/name are in Settings) |
 | `STRIPE_KEY` / `STRIPE_SECRET` / `STRIPE_WEBHOOK_SECRET` | Stripe secrets (currency is in Settings) |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | First-boot admin (defaults: `admin@bamadogym.com` / `password`) |
-| `RUN_MIGRATIONS` / `RUN_SEEDERS` | Docker boot behaviour (`RUN_SEEDERS=false` after first deploy) |
+| `RUN_MIGRATIONS` / `CACHE_CONFIG` | Docker boot behaviour (optional) |
 
 ## Scheduled tasks
 

@@ -30,12 +30,6 @@ if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
         || echo "WARNING: migrate skipped/failed — app will still start. Fix DB_* env if the UI reports a database error."
 fi
 
-if [ "${RUN_SEEDERS:-false}" = "true" ]; then
-    echo "Attempting seeders (non-blocking)..."
-    php artisan db:seed --force --no-interaction \
-        || echo "WARNING: seed skipped/failed."
-fi
-
 if [ "${APP_ENV}" = "production" ] || [ "${CACHE_CONFIG:-true}" = "true" ]; then
     php artisan config:cache || true
     php artisan route:cache || true

@@ -12,7 +12,6 @@ services:
       - .env
     environment:
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
-      RUN_SEEDERS: ${RUN_SEEDERS:-false}
       CACHE_CONFIG: ${CACHE_CONFIG:-true}
     volumes:
       - storage_app:/var/www/html/storage/app
