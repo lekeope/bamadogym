@@ -55,16 +55,16 @@ RUN set -eux; \
     rm -f /opt/docker/etc/supervisor.d/*.conf /etc/supervisor/conf.d/*.conf || true; \
     # Drop ionCube so JIT warning cannot fire even without their entrypoint.
     find /usr/local/etc/php /opt/docker/etc/php -type f \( -iname '*ioncube*' -o -iname '*ion_cube*' \) -delete 2>/dev/null || true; \
-    # Avoid two pools binding :9000 (official www + webdevops application).
-    rm -f /usr/local/etc/php-fpm.d/www.conf /usr/local/etc/php-fpm.d/www.conf.default || true
+    # Official image ships docker.conf with a partial [www] pool (no user=).
+    # Wipe pool snippets and install one complete www.conf.
+    rm -f /usr/local/etc/php-fpm.d/*.conf; \
+    rm -f /opt/docker/etc/php/fpm/pool.d/*.conf || true
 
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-bamado.ini
 COPY docker/php/php.ini /opt/docker/etc/php/php.ini
 COPY docker/php/opcache.ini /opt/docker/etc/php/opcache-bamado.ini
-# Replace pool config (do not stack a second [application] / [www] on :9000)
-COPY docker/php/zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf
-COPY docker/php/zz-docker.conf /opt/docker/etc/php/fpm/pool.d/application.conf
+COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
 COPY docker/nginx/default.conf /etc/nginx/templates/default.conf.template
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
