@@ -11,12 +11,19 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Admin',
-            'email' => 'admin@bamadogym.com',
-            'role' => 'admin',
-            'checkin_token' => Str::random(32),
-        ]);
+        $email = env('ADMIN_EMAIL', 'admin@bamadogym.com');
+        $password = env('ADMIN_PASSWORD', 'password');
+
+        // Avoid User::factory() — Faker is not installed in production (--no-dev).
+        User::query()->firstOrCreate(
+            ['email' => $email],
+            [
+                'name' => 'Admin',
+                'role' => 'admin',
+                'password' => $password,
+                'checkin_token' => Str::random(32),
+            ]
+        );
 
         $plans = [
             [
@@ -46,7 +53,10 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($plans as $plan) {
-            Plan::create($plan);
+            Plan::query()->firstOrCreate(
+                ['slug' => $plan['slug']],
+                $plan
+            );
         }
     }
 }

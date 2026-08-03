@@ -37,8 +37,11 @@ npm install && npm run dev
 php artisan serve
 ```
 
-Default admin: `admin@bamadogym.com` — set a password after seed:
-`php artisan tinker` → `User::first()->update(['password' => bcrypt('yourpassword')])`
+Default admin after seed:
+- Email: `admin@bamadogym.com` (or `ADMIN_EMAIL`)
+- Password: `password` (or `ADMIN_PASSWORD`)
+
+Change the password after first login.
 
 ## Deploy with Docker (PostgreSQL)
 
@@ -57,8 +60,8 @@ Single container image (nginx + PHP-FPM + queue + scheduler). Works with **Cooli
 3. Attach a PostgreSQL database and set **`DB_URL`** to the Coolify internal URL (`postgres://USER:PASSWORD@HOST:5432/DATABASE` — never `127.0.0.1`). The app parses host/user/password from this alone.
 4. Set `APP_KEY`, `APP_URL` (your public HTTPS URL), `APP_ENV=production`, `APP_DEBUG=false`
 5. Prefer `SESSION_DRIVER=file` and `CACHE_STORE=file` so a bad DB config does not blank every request
-6. Optional: `RUN_SEEDERS=true` on first deploy only
-7. After first login as admin, open **Admin → Settings** for branding, contact, hours, mail-from, currency (leave Stripe secrets in Coolify env)
+6. Optional: `RUN_SEEDERS=true` on first deploy only (creates admin + plans; set `ADMIN_PASSWORD` in Coolify)
+7. After first login as admin, set `RUN_SEEDERS=false`, change the admin password, then open **Admin → Settings** for branding/contact/hours
 
 The container **does not wait** for Postgres on boot. If the DB is unreachable, the site still starts and shows a **Database offline** page instead of hanging or crashing.
 
@@ -95,7 +98,8 @@ Only foundational / secret values belong in `.env` (or Coolify). Everything else
 | `SESSION_DRIVER` / `CACHE_STORE` / `QUEUE_CONNECTION` | Drivers |
 | `MAIL_MAILER` / `MAIL_HOST` / `MAIL_USERNAME` / `MAIL_PASSWORD` | Mail transport (from address/name are in Settings) |
 | `STRIPE_KEY` / `STRIPE_SECRET` / `STRIPE_WEBHOOK_SECRET` | Stripe secrets (currency is in Settings) |
-| `RUN_MIGRATIONS` / `RUN_SEEDERS` | Docker boot behaviour |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | First-boot admin (defaults: `admin@bamadogym.com` / `password`) |
+| `RUN_MIGRATIONS` / `RUN_SEEDERS` | Docker boot behaviour (`RUN_SEEDERS=false` after first deploy) |
 
 ## Scheduled tasks
 
