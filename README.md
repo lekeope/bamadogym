@@ -55,8 +55,9 @@ Single container image (nginx + PHP-FPM + queue + scheduler). Works with **Cooli
 
 ### Coolify (Dockerfile)
 
-1. Build Pack: **Dockerfile**
+1. Build Pack: **Dockerfile** (runtime uses `webdevops/php:8.3` so PHP extensions are pulled prebuilt — avoids OOM while compiling `intl` on small VPSes)
 2. **Ports Exposes** must match `PORT` (Coolify often sets `PORT=3000` — then expose **3000**, not 80)
+3. Mark `APP_ENV` / DB secrets as **Runtime only** when Coolify offers that (do not bake production env into the build)
 3. Attach a PostgreSQL database and set **`DB_URL`** to the Coolify internal URL (`postgres://USER:PASSWORD@HOST:5432/DATABASE` — never `127.0.0.1`). The app parses host/user/password from this alone.
 4. Set `APP_KEY`, `APP_URL` (your public HTTPS URL), `APP_ENV=production`, `APP_DEBUG=false`
 5. Prefer `SESSION_DRIVER=file` and `CACHE_STORE=file` so a bad DB config does not blank every request

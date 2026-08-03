@@ -30,32 +30,27 @@ COPY . .
 RUN composer dump-autoload --optimize --no-dev --no-interaction
 
 # ---- Runtime: nginx + PHP-FPM ----
-FROM php:8.3-fpm-bookworm
+# webdevops ships intl/pdo_pgsql/bcmath/opcache/pcntl/zip already compiled.
+# Official php:* + install-php-extensions compiles those on Coolify and OOMs small VPSes.
+FROM webdevops/php:8.3
 
 WORKDIR /var/www/html
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PORT=80
+ENV WEB_DOCUMENT_ROOT=/var/www/html/public
 
-# Prebuilt extensions — avoids compiling intl/opcache from source (slow + OOM on small VPSes)
-COPY --from=mlocati/php-extension-installer:2 /usr/bin/install-php-extensions /usr/local/bin/
+USER root
 
-RUN install-php-extensions \
-        bcmath \
-        intl \
-        opcache \
-        pcntl \
-        pdo_pgsql \
-        pgsql \
-        zip \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        curl \
-        nginx \
-        supervisor \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -f /etc/nginx/sites-enabled/default \
-    && mkdir -p /etc/nginx/templates /var/log/nginx /var/lib/nginx/body /run/nginx /var/log/supervisor
+# nginx for our reverse proxy; supervisor is already in the base image.
+# Strip webdevops supervisor programs so only our supervisord.conf runs.
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends nginx; \
+    rm -rf /var/lib/apt/lists/*; \
+    rm -f /etc/nginx/sites-enabled/default; \
+    mkdir -p /etc/nginx/templates /etc/nginx/conf.d /var/log/nginx /var/lib/nginx/body /run/nginx /var/log/supervisor; \
+    rm -f /opt/docker/etc/supervisor.d/*.conf /etc/supervisor/conf.d/*.conf || true
 
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-bamado.ini
@@ -81,5 +76,6 @@ RUN mkdir -p \
 
 EXPOSE 80
 
+# Replace webdevops /entrypoint — we own boot (PORT, migrate, caches) + supervisord.
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
