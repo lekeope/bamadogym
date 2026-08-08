@@ -2,29 +2,26 @@
 
 namespace App\Providers;
 
-use App\Services\AppSettings;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        AppSettings::applyToConfig();
+        $gym = config('gym');
 
-        View::composer('*', function ($view) {
-            $view->with('gym', AppSettings::all());
+        if (! empty($gym['app_name'])) {
+            config(['app.name' => $gym['app_name']]);
+        }
+
+        View::composer('*', function ($view) use ($gym) {
+            $view->with('gym', $gym);
         });
     }
 }

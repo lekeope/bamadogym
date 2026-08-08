@@ -2,8 +2,6 @@
 set -e
 
 PORT="${PORT:-80}"
-# libpq: fail fast on migrate/connect instead of hanging
-export PGCONNECT_TIMEOUT="${DB_CONNECT_TIMEOUT:-3}"
 
 # Coolify / platforms set PORT — nginx must listen on the same port.
 sed "s/LISTEN_PORT/${PORT}/g" /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
@@ -23,13 +21,7 @@ mkdir -p \
 # webdevops PHP-FPM runs as `application` (UID 1000), not www-data.
 chown -R application:application storage bootstrap/cache || true
 
-# Do not wait for Postgres. Try migrate once; if DB is down, start the web UI anyway.
-if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
-    echo "Attempting migrations (non-blocking)..."
-    php artisan migrate --force --no-interaction \
-        || echo "WARNING: migrate skipped/failed — app will still start. Fix DB_* env if the UI reports a database error."
-fi
-
+# Marketing MVP — no database migrations.
 if [ "${APP_ENV}" = "production" ] || [ "${CACHE_CONFIG:-true}" = "true" ]; then
     php artisan config:cache || true
     php artisan route:cache || true

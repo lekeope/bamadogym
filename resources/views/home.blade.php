@@ -25,8 +25,10 @@
             {{ $gym['hero_subtitle'] ?? "Bamado Gym is Lagos's premier open-access fitness facility." }}
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="{{ route('join.show') }}" class="w-full sm:w-auto bg-amber-400 text-zinc-950 px-8 py-4 rounded-xl font-bold text-lg hover:bg-amber-300 transition-all hover:scale-105 shadow-lg shadow-amber-400/20">
-                Become a Member
+            <a href="{{ gym_whatsapp_url('Hi! I want to join '.($gym['app_name'] ?? 'Bamado Gym').'.') }}"
+               target="_blank" rel="noopener"
+               class="w-full sm:w-auto bg-amber-400 text-zinc-950 px-8 py-4 rounded-xl font-bold text-lg hover:bg-amber-300 transition-all hover:scale-105 shadow-lg shadow-amber-400/20">
+                Chat on WhatsApp
             </a>
             <a href="#pricing" class="w-full sm:w-auto border border-zinc-700 text-zinc-300 px-8 py-4 rounded-xl font-medium hover:border-zinc-500 hover:text-white transition">
                 View Pricing
@@ -53,9 +55,9 @@
                 ['💪', 'World-Class Equipment', 'Free weights, machines, cardio — everything you need for any training style.'],
                 ['🕐', 'Open 7 Days', 'Early mornings to late evenings. Your schedule, your gym.'],
                 ['🏅', 'Expert Trainers', 'Certified trainers available for advice, form checks, and personal programs.'],
-                ['📱', 'Easy Check-In', 'QR code check-in at the door. No fuss, just train.'],
+                ['🚿', 'Clean Facilities', 'Showers, lockers, and a space kept ready for serious training.'],
                 ['🔒', 'Secure Facility', 'CCTV, secure lockers, and a safe environment for all members.'],
-                ['🤝', 'Great Community', 'Join hundreds of members who motivate each other every single day.'],
+                ['🤝', 'Great Community', 'Join members who motivate each other every single day.'],
             ] as [$icon, $title, $desc])
             <div class="bg-zinc-800/50 border border-zinc-700/50 rounded-2xl p-6 hover:border-amber-400/30 transition-all hover:-translate-y-1">
                 <div class="text-3xl mb-4">{{ $icon }}</div>
@@ -72,11 +74,11 @@
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">Simple, transparent pricing</h2>
-            <p class="text-zinc-400 text-lg">No hidden fees. Cancel or freeze anytime.</p>
+            <p class="text-zinc-400 text-lg">Walk in or message us to start. Plans can be adjusted for your gym.</p>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-{{ $plans->count() }} gap-8 max-w-4xl mx-auto">
-            @foreach($plans as $index => $plan)
-            @php $featured = $index === 1; @endphp
+        <div class="grid grid-cols-1 sm:grid-cols-{{ max(count($plans), 1) }} gap-8 max-w-4xl mx-auto">
+            @foreach($plans as $plan)
+            @php $featured = ! empty($plan['featured']); @endphp
             <div class="relative rounded-2xl p-8 flex flex-col {{ $featured ? 'bg-amber-400 text-zinc-950 scale-105 shadow-2xl shadow-amber-400/20' : 'bg-zinc-800/50 border border-zinc-700/50 text-white' }}">
                 @if($featured)
                 <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-zinc-950 text-amber-400 text-xs font-bold px-4 py-1 rounded-full border border-amber-400/30 uppercase tracking-wider">
@@ -84,15 +86,15 @@
                 </div>
                 @endif
                 <div class="mb-6">
-                    <h3 class="text-2xl font-extrabold mb-1">{{ $plan->name }}</h3>
-                    <p class="{{ $featured ? 'text-zinc-700' : 'text-zinc-400' }} text-sm">{{ $plan->description }}</p>
+                    <h3 class="text-2xl font-extrabold mb-1">{{ $plan['name'] }}</h3>
+                    <p class="{{ $featured ? 'text-zinc-700' : 'text-zinc-400' }} text-sm">{{ $plan['description'] }}</p>
                 </div>
                 <div class="mb-8">
-                    <span class="text-4xl font-extrabold">{{ $plan->formattedPrice() }}</span>
-                    <span class="{{ $featured ? 'text-zinc-700' : 'text-zinc-500' }} text-sm"> / {{ $plan->duration_days }} days</span>
+                    <span class="text-4xl font-extrabold">{{ $plan['price_label'] }}</span>
+                    <span class="{{ $featured ? 'text-zinc-700' : 'text-zinc-500' }} text-sm"> / {{ $plan['duration'] }}</span>
                 </div>
                 <ul class="space-y-3 mb-8 flex-1">
-                    @foreach(['Full gym access', 'All equipment', 'Locker use', 'QR check-in', 'Trainer advice'] as $feature)
+                    @foreach(['Full gym access', 'All equipment', 'Locker use', 'Trainer advice'] as $feature)
                     <li class="flex items-center gap-2 text-sm">
                         <svg class="w-4 h-4 {{ $featured ? 'text-zinc-800' : 'text-amber-400' }} flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
@@ -101,9 +103,10 @@
                     </li>
                     @endforeach
                 </ul>
-                <a href="{{ route('join.show') }}?plan={{ $plan->id }}"
+                <a href="{{ gym_whatsapp_url('Hi! I am interested in the '.$plan['name'].' plan at '.($gym['app_name'] ?? 'Bamado Gym').'.') }}"
+                   target="_blank" rel="noopener"
                    class="block text-center py-3 px-6 rounded-xl font-bold transition {{ $featured ? 'bg-zinc-950 text-amber-400 hover:bg-zinc-800' : 'bg-amber-400 text-zinc-950 hover:bg-amber-300' }}">
-                    Get Started
+                    Message to Join
                 </a>
             </div>
             @endforeach
@@ -117,7 +120,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
                 <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-6">Come and train with us</h2>
-                <p class="text-zinc-400 text-lg mb-8">We're conveniently located and open almost every hour that matters. Walk in, or sign up online in minutes.</p>
+                <p class="text-zinc-400 text-lg mb-8">Walk in anytime we're open, or message us to ask about membership.</p>
                 <div class="space-y-4">
                     <div class="flex items-start gap-4">
                         <div class="w-10 h-10 bg-amber-400/10 rounded-lg flex items-center justify-center text-amber-400 flex-shrink-0">📍</div>
@@ -130,14 +133,14 @@
                         <div class="w-10 h-10 bg-amber-400/10 rounded-lg flex items-center justify-center text-amber-400 flex-shrink-0">📞</div>
                         <div>
                             <div class="font-semibold text-white">Phone</div>
-                            <div class="text-zinc-400 text-sm">{{ $gym['contact_phone'] ?? '+234 800 000 0000' }}</div>
+                            <a href="tel:{{ preg_replace('/\s+/', '', $gym['contact_phone'] ?? '') }}" class="text-zinc-400 text-sm hover:text-amber-400 transition">{{ $gym['contact_phone'] ?? '+234 800 000 0000' }}</a>
                         </div>
                     </div>
                     <div class="flex items-start gap-4">
                         <div class="w-10 h-10 bg-amber-400/10 rounded-lg flex items-center justify-center text-amber-400 flex-shrink-0">✉️</div>
                         <div>
                             <div class="font-semibold text-white">Email</div>
-                            <div class="text-zinc-400 text-sm">{{ $gym['contact_email'] ?? 'info@bamadogym.com' }}</div>
+                            <a href="{{ gym_mailto_url('Membership enquiry') }}" class="text-zinc-400 text-sm hover:text-amber-400 transition">{{ $gym['contact_email'] ?? 'info@bamadogym.com' }}</a>
                         </div>
                     </div>
                 </div>
@@ -157,8 +160,10 @@
                     </div>
                     @endforeach
                 </div>
-                <a href="{{ route('join.show') }}" class="mt-6 block text-center bg-amber-400 text-zinc-950 py-3 rounded-xl font-bold hover:bg-amber-300 transition">
-                    Join Today
+                <a href="{{ gym_whatsapp_url('Hi! I want to visit '.($gym['app_name'] ?? 'Bamado Gym').'.') }}"
+                   target="_blank" rel="noopener"
+                   class="mt-6 block text-center bg-amber-400 text-zinc-950 py-3 rounded-xl font-bold hover:bg-amber-300 transition">
+                    WhatsApp Us
                 </a>
             </div>
         </div>

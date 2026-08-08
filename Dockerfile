@@ -87,6 +87,6 @@ RUN mkdir -p \
 
 EXPOSE 80
 
-# Replace webdevops /entrypoint — we own boot (PORT, migrate, caches) + supervisord.
+# Replace webdevops /entrypoint — we own boot (PORT, caches) + supervisord.
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
