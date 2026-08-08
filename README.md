@@ -1,70 +1,43 @@
 # Bamado Gym
 
-Marketing MVP for Bamado Gym — a single landing page to validate interest. **No database, no login, no admin, no Stripe.**
+Static marketing site (`site/`) to validate gym interest. **No PHP, no database, no app container you maintain.**
 
-## Stack
+Laravel code remains in the repo for later, but Coolify should serve **`site/` only**.
 
-- **Framework:** Laravel 13 + PHP 8.3
-- **Frontend:** Blade + Vite + Tailwind CSS
-- **Deploy:** Docker (nginx + PHP-FPM only)
+## Local preview
 
-## What’s live
-
-- Public landing page (`/`) — brand, about, pricing, hours, contact
-- CTAs open **WhatsApp** / **mailto** (no online registration)
-- Copy + plans come from `config/gym.php` (overridable with `GYM_*` env vars)
-
-## What’s paused (code may still exist unused)
-
-Auth, admin, members, check-in, Stripe, reminders, Postgres, queue, scheduler.
-
-## Setup (local)
+Open `site/index.html` in a browser, or:
 
 ```bash
-cp .env.example .env
-php artisan key:generate
-touch database/database.sqlite
-npm install && npm run dev
-php artisan serve
+cd site && python3 -m http.server 8080
 ```
 
-Open **http://localhost:8000**. Edit `config/gym.php` or `GYM_*` in `.env` for real address / WhatsApp number.
+Edit phone / WhatsApp / address / prices directly in `site/index.html`.
 
-## Deploy (Coolify / Docker)
+## Coolify (kill the Dockerfile app)
 
-1. Build Pack: **Dockerfile**
-2. **Ports Exposes** = `PORT` (Coolify often uses `3000`)
-3. Set `APP_KEY`, `APP_URL`, `APP_ENV=production`, `APP_DEBUG=false`
-4. Set `SESSION_DRIVER=file`, `CACHE_STORE=file`, `QUEUE_CONNECTION=sync`, `DB_CONNECTION=sqlite`
-5. Set gym copy: `GYM_NAME`, `GYM_WHATSAPP`, `GYM_PHONE`, `GYM_EMAIL`, `GYM_ADDRESS`, hours, etc.
-6. **Detach / delete the Postgres resource** — the app does not need it
+1. Open the existing app (or create a new one from the same GitHub repo).
+2. **Build Pack → Static** (not Dockerfile / Nixpacks).
+3. **Base Directory → `/site`**
+4. Web server: **Nginx** (Coolify default).
+5. Set your domain.
+6. **Deploy**.
+7. Optional cleanup:
+   - Delete / detach the old **Postgres** resource
+   - Remove old env vars (`APP_KEY`, `DB_*`, Stripe, etc.) — unused for static
+   - Stop/delete the old Dockerfile-based service if you created a new Static app
 
-Local Compose:
+Coolify wraps `site/` in a tiny Nginx image. You are not running Laravel.
 
-```bash
-cp .env.docker.example .env
-# set APP_KEY
-docker compose up -d --build
-```
+Docs: [Coolify Static build pack](https://coolify.io/docs/applications/build-packs/static)
 
-App: **http://localhost:8080**
+## Files that matter
 
-## Environment variables
+| Path | Role |
+|------|------|
+| `site/index.html` | Landing page copy + WhatsApp links |
+| `site/styles.css` | Styles |
 
-| Variable | Description |
-|----------|-------------|
-| `APP_KEY` / `APP_URL` / `APP_ENV` / `APP_DEBUG` | App bootstrap |
-| `GYM_NAME` / `GYM_TAGLINE` / `GYM_HERO_SUBTITLE` | Branding |
-| `GYM_ADDRESS` / `GYM_PHONE` / `GYM_EMAIL` | Contact |
-| `GYM_WHATSAPP` | Digits only with country code (e.g. `2348012345678`) |
-| `GYM_HOURS_*` | Opening hours |
-| `CACHE_CONFIG` | Cache Laravel config/routes/views on boot (default true in prod) |
+## Parked for later
 
-Plan cards live in `config/gym.php` (`plans` array).
-
-## Routes
-
-| Path | Description |
-|------|-------------|
-| `/` | Marketing landing page |
-| `/up` | Health check |
+Everything outside `site/` (Laravel, Docker PHP image, auth, admin, etc.) is unused while Coolify points at Static + `/site`.
